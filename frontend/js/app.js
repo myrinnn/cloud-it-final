@@ -493,18 +493,16 @@ async function showAddPattern() {
 async function addPattern(event) {
     event.preventDefault();
 
-    //get user
-
     let user = await Data.getCurrentUser();
     if (!user) return;
 
-    //get input
+    let imageFile = document.getElementById('apImageFile').files[0];
 
     let data = {
         title: document.getElementById('apTitle').value.trim(),
         description: document.getElementById('apDescription').value.trim(),
         price: parseFloat(document.getElementById('apPrice').value) || 0,
-        image_url: document.getElementById('apImage').value.trim() || '/images/0.jpg',
+        image_url: "",
         pattern_details: document.getElementById('apDetails').value.trim(),
         seller_id: user.id,
         seller_name: user.username,
@@ -513,24 +511,36 @@ async function addPattern(event) {
         category: 'accessories'
     };
 
-    //validate input
-
     let validation = Security.validatePattern(data);
     if (!validation.valid) {
         alert(Object.values(validation.errors).join('\n'));
         return;
     }
 
-    //update data, refresh
-
     try {
         let result = await Data.createPattern(data);
         if (result) {
-
+            let patternId = result.id;
+            
+            if (imageFile) {
+                let formData = new FormData();
+                formData.append('file', imageFile);
+                
+                let response = await fetch(`https://pattern-service-6jrp.onrender.com/api/patterns/upload-image/${patternId}`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                let uploadResult = await response.json();
+                if (uploadResult.image_url) {
+                    await Data.updatePattern(patternId, { image_url: uploadResult.image_url });
+                }
+            }
+            
             alert('Pattern published!');
-
             closePopup('addPatternPopup');
             document.getElementById('addPatternForm').reset();
+            document.getElementById('imagePreview').innerHTML = '';
             loadMarketplace();
         }
     } catch (error) {
@@ -921,6 +931,23 @@ function closePopup(id) {
 document.addEventListener('click', function(e) {
     if (e.target.classList && e.target.classList.contains('popup')) {
         e.target.style.display = 'none';
+    }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    let fileInput = document.getElementById('apImageFile');
+    if (fileInput) {
+        fileInput.addEventListener('change', function(e) {
+            let file = e.target.files[0];
+            if (file) {
+                let reader = new FileReader();
+                reader.onload = function(event) {
+                    document.getElementById('imagePreview').innerHTML = 
+                        '<img src="' + event.target.result + '" style="max-width:200px;max-height:150px;border:1px solid #ddd;border-radius:4px;">';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
     }
 });
 

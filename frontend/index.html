@@ -191,25 +191,25 @@
 
         <div id="addPatternPopup" class="popup" style="display:none;">
             <div class="popup-box">
-
                 <button onclick="closePopup('addPatternPopup')">X</button>
-
-
                 <h3>Add Pattern</h3>
                 <form id="addPatternForm" onsubmit="addPattern(event)">
                     <input type="text" id="apTitle" placeholder="Title" required>
-
                     <textarea id="apDescription" placeholder="Description" required></textarea>
                     <input type="number" id="apPrice" placeholder="Price (0 = free)" value="0" step="0.01">
-                    <input type="text" id="apImage" placeholder="Image URL (leave blank for default)">
-
+                    
+                    <div style="margin:10px 0;">
+                        <label>Pattern Image</label>
+                        <input type="file" id="apImageFile" accept="image/*">
+                        <div id="imagePreview" style="margin-top:5px;"></div>
+                        <small>Upload an image for your pattern</small>
+                    </div>
+                    <input type="hidden" id="apImage" value="">
+                    
                     <textarea id="apDetails" placeholder="Pattern instructions" required></textarea>
-
                     <button type="submit">Publish</button>
-
                     <button type="button" onclick="closePopup('addPatternPopup')">Cancel</button>
                 </form>
-
             </div>
         </div>
 
@@ -242,5 +242,5 @@
 
     </body>
 
-    
+
 </html>
