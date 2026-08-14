@@ -292,7 +292,7 @@ async function viewPattern(id) {
 
         try {
             let purchases = await Data.getPurchases(user.id);
-            hasPurchased = purchases.purchases && purchases.purchases.some(p => p.pattern_id === id);
+            hasPurchased = purchases.some(p => p.pattern_id === id);
         } catch (e) {}
     }
 
