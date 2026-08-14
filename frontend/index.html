@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+
+
+<html>
+
+    <head>
+
+        <title>All You Can Knit</title>
+        <link rel="stylesheet" href="css/styles.css">
+        <meta charset="UTF-8">
+    </head>
+
+
+    <body>
+
+        <!-- nav bar -->
+
+        <div id="nav">
+
+            <div class="nav-left">
+
+                <!-- site name -->
+                <span class="brand">All You Can Knit</span>
+
+                <!-- nav links -->
+                <a href="#" onclick="showPage('home')">Home</a>
+                <a href="#" onclick="showPage('marketplace')">Marketplace</a>
+                <a href="#" onclick="showPage('profile')">Profile</a>
+                <a href="#" onclick="showPage('community')">Community</a>
+
+            </div>
+
+            <div class="nav-right">
+
+                <!-- user display, default: guest -->
+                <span class="user-badge" id="userBadge">User: <span id="userDisplay">Guest</span></span>
+
+                <!-- balance, default = 0 -->
+                <span class="wallet-badge" id="walletDisplay" style="display:none;">Wallet: <span id="walletAmount">0.00</span></span>
+
+                <!-- login + signup + sign out btn -->
+                <a href="#" onclick="showPage('login')" id="loginNavBtn">Login</a>
+                <a href="#" onclick="showPage('register')" id="registerNavBtn">Sign Up</a>
+                <button onclick="logout()" id="logoutBtn" style="display:none;">Logout</button>
+            </div>
+
+        </div>
+
+        <hr>
+
+        <!-- home "page" -->
+
+        <div id="page-home" class="page">
+
+            <h1>All You Can Knit</h1>
+            <p>Discover new knitting and crochet patterns! Exchange tips and ask questions to your fellow knitters and crocheters!</p>
+            
+            <!-- we only have like. 6 patterns :D -->
+            <div class="stats">
+                <div><span id="totalPatterns">0</span> Patterns</div>
+                <div><span id="totalSellers">0</span> Designers</div>
+                <div><span id="totalPosts">0</span> Posts</div>
+            
+            </div>
+
+            <!-- nav to market -->
+            <button onclick="showPage('marketplace')">Browse Patterns</button>
+
+            <!-- cool patterns to entice you (maybe) -->
+            <h2>Featured Patterns</h2>
+            <div id="featuredGrid" class="grid"></div>
+        </div>
+
+        <!-- market/search page -->
+
+        <div id="page-marketplace" class="page" style="display:none;">
+
+            <h2>Marketplace</h2>
+
+            <!-- filters: difficulty & price -->
+            <div class="filters">
+
+                <input type="text" id="searchInput" placeholder="Search...">
+                <select id="skillFilter">
+
+                    <option value="all">All Levels</option>
+                    <option value="beginner">Beginner</option>
+                    <option value="intermediate">Intermediate</option>
+                    <option value="advanced">Advanced</option>
+
+                </select>
+                <select id="priceFilter">
+
+                    <option value="all">All Prices</option>
+                    <option value="free">Free</option>
+                    <option value="paid">Paid</option>
+
+                </select>
+                <button onclick="searchPatterns()">Search</button>
+            </div>
+
+            <!-- all patterns -->
+            <div id="patternGrid" class="grid"></div>
+            <button id="addPatternBtn" style="display:none; margin-top:15px;" onclick="showAddPattern()">Add Your Design</button>
+        </div>
+
+        <!-- user profile -->
+
+        <div id="page-profile" class="page" style="display:none;">
+            <h2>My Profile</h2>
+            <div id="profileContent"></div>
+        </div>
+
+        <!-- community posts -->
+
+        <div id="page-community" class="page" style="display:none;">
+            <h2>Community</h2>
+            <button onclick="showAddPost()">Create Post</button>
+            <div id="communityContent"></div>
+        </div>
+
+        <!-- login -->
+        <div id="page-login" class="page" style="display:none;">
+
+            <div class="auth-box">
+                <h2>Login</h2>
+
+                <form id="loginForm" onsubmit="login(event)">
+
+                    <input type="text" id="loginUsername" placeholder="Username" required>
+                    <input type="password" id="loginPassword" placeholder="Password" required>
+
+                    <button type="submit">Login</button>
+
+                </form>
+
+                <p>Don't have an account? <a href="#" onclick="showPage('register')">Sign Up</a></p>
+            </div>
+        </div>
+
+        <!-- signup -->
+        <div id="page-register" class="page" style="display:none;">
+
+            <div class="auth-box">
+
+                <h2>Create Account</h2>
+                <form id="registerForm" onsubmit="register(event)">
+
+                    <input type="text" id="regUsername" placeholder="Username" required>
+
+                    <input type="password" id="regPassword" placeholder="Password (min 6 chars)" required>
+                    <input type="password" id="regConfirm" placeholder="Confirm Password" required>
+
+                    <button type="submit">Sign Up</button>
+
+                </form>
+
+                <p>Already have an account? <a href="#" onclick="showPage('login')">Login</a></p>
+                <p class="bonus">You get 10.00 free credit!</p>
+
+            </div>
+        </div>
+
+        <!-- pattern popup (for buying) -->
+
+        <div id="patternPopup" class="popup" style="display:none;">
+
+            <div class="popup-box">
+
+                <button onclick="closePopup('patternPopup')">X</button>
+                <div id="patternDetail"></div>
+
+            </div>
+
+        </div>
+
+        <!-- pattern popup (full view after purchase) ===== -->
+
+        <div id="detailsPopup" class="popup" style="display:none;">
+
+            <div class="popup-box">
+
+                <button onclick="closePopup('detailsPopup')">X</button>
+                <h2 id="detailsTitle">Pattern Details</h2>
+                <pre id="detailsContent"></pre>
+            </div>
+
+        </div>
+
+        <!-- add new pattern popup -->
+
+        <div id="addPatternPopup" class="popup" style="display:none;">
+            <div class="popup-box">
+
+                <button onclick="closePopup('addPatternPopup')">X</button>
+
+
+                <h3>Add Pattern</h3>
+                <form id="addPatternForm" onsubmit="addPattern(event)">
+                    <input type="text" id="apTitle" placeholder="Title" required>
+
+                    <textarea id="apDescription" placeholder="Description" required></textarea>
+                    <input type="number" id="apPrice" placeholder="Price (0 = free)" value="0" step="0.01">
+                    <input type="text" id="apImage" placeholder="Image URL (leave blank for default)">
+
+                    <textarea id="apDetails" placeholder="Pattern instructions" required></textarea>
+
+                    <button type="submit">Publish</button>
+
+                    <button type="button" onclick="closePopup('addPatternPopup')">Cancel</button>
+                </form>
+
+            </div>
+        </div>
+
+        <!-- create post popup -->
+
+        <div id="addPostPopup" class="popup" style="display:none;">
+
+            <div class="popup-box">
+
+                <button onclick="closePopup('addPostPopup')">X</button>
+
+                <h3>Create Post</h3>
+
+                <form id="addPostForm" onsubmit="addPost(event)">
+                    <input type="text" id="postTitle" placeholder="Title" required>
+                    <textarea id="postContent" placeholder="Content" required></textarea>
+
+                    <button type="submit">Post</button>
+                    <button type="button" onclick="closePopup('addPostPopup')">Cancel</button>
+                </form>
+
+            </div>
+        </div>
+
+
+        <script src="js/security.js"></script>
+        <script src="js/data.js"></script>
+        <script src="js/app.js"></script>
+
+
+    </body>
+
+    
+</html>

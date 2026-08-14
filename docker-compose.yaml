@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    ports:
+      - "80:80"
+    networks:
+      - knit-network
+    restart: always
+
+  user-service:
+    build: ./backend/user-service
+    container_name: user-service
+    ports:
+      - "8080:8080"
+    environment:
+      - AZURE_CONNECTION_STRING=${AZURE_CONNECTION_STRING}
+    networks:
+      - knit-network
+    restart: always
+
+  pattern-service:
+    build: ./backend/pattern-service
+    container_name: pattern-service
+    ports:
+      - "8081:8081"
+    environment:
+      - AZURE_CONNECTION_STRING=${AZURE_CONNECTION_STRING}
+    networks:
+      - knit-network
+    restart: always
+
+  community-service:
+    build: ./backend/community-service
+    container_name: community-service
+    ports:
+      - "8082:8082"
+    environment:
+      - AZURE_CONNECTION_STRING=${AZURE_CONNECTION_STRING}
+    networks:
+      - knit-network
+    restart: always
+
+  payment-service:
+    build: ./backend/payment-service
+    container_name: payment-service
+    ports:
+      - "8083:8083"
+    environment:
+      - AZURE_CONNECTION_STRING=${AZURE_CONNECTION_STRING}
+    networks:
+      - knit-network
+    restart: always
+
+networks:
+  knit-network:
+    driver: bridge
