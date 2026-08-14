@@ -406,7 +406,11 @@ async function getFreePattern(id) {
         if (result.success) {
             alert('Pattern details now available');
 
+            let patterns = await Data.getPatterns();
+            allPatterns = patterns
+
             closePopup('patternPopup');
+            loadMarketplace();
 
             if (result.purchase && result.purchase.pattern_details) {
                 document.getElementById('detailsTitle').textContent = 'Pattern Details';
