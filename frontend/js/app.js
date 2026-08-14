@@ -292,7 +292,11 @@ async function viewPattern(id) {
 
         try {
             let purchases = await Data.getPurchases(user.id);
-            hasPurchased = purchases.some(p => p.pattern_id === id);
+            if (Array.isArray(purchases)) {
+                hasPurchased = purchases.some(p => p.pattern_id === id);
+            } else if (purchases && purchases.purchases) {
+                hasPurchased = purchases.purchases.some(p => p.pattern_id === id);
+            }
         } catch (e) {}
     }
 
