@@ -74,6 +74,10 @@ const Data = {
         return this.call(this.USER_API + '/users/' + id + '/wallet/add', 'POST', { amount });
     },
 
+    getPatterns: function() {
+        return this.call(this.PATTERN_API + '/patterns');
+    },
+
     getPattern: function(id) {
     return this.call(this.PATTERN_API + '/patterns/' + id);
     },
