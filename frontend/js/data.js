@@ -1,20 +1,26 @@
+
+//backend url
+
 const Data = {
     USER_API: 'https://user-service-0cbz.onrender.com/api',
     PATTERN_API: 'https://pattern-service-6jrp.onrender.com/api',
     COMMUNITY_API: 'https://community-service-ev6n.onrender.com/api',
     PAYMENT_API: 'https://payment-service-ayj0.onrender.com/api',
     
-    // ===== USER ID STORAGE =====
+    // store id in localstorage
+
     setUserId: function(id) {
         if (id) {
             localStorage.setItem('userId', parseInt(id));
         }
     },
     
+    //remove id from storage
     logout: function() {
         localStorage.removeItem('userId');
     },
     
+    //get user from storage
     async getCurrentUser() {
         let userId = localStorage.getItem('userId');
         if (!userId) return null;
@@ -27,7 +33,8 @@ const Data = {
         }
     },
     
-    // ===== API CALL =====
+    // api call
+
     async call(url, method = 'GET', data = null) {
         let options = {
             method: method,
@@ -45,7 +52,8 @@ const Data = {
         return result;
     },
 
-    // ===== AUTH =====
+    //various api calls
+
     register: function(username, password) {
         return this.call(this.USER_API + '/auth/register', 'POST', { username, password });
     },
@@ -66,7 +74,6 @@ const Data = {
         return this.call(this.USER_API + '/users/' + id + '/wallet/add', 'POST', { amount });
     },
 
-    // ===== PATTERNS =====
     getPatterns: function() {
         return this.call(this.PATTERN_API + '/patterns');
     },
@@ -83,7 +90,7 @@ const Data = {
         return this.call(this.PATTERN_API + '/patterns/' + id + '?user_id=' + userId, 'DELETE');
     },
 
-    // ===== PAYMENTS =====
+    // add purchase to storage
     purchase: function(userId, patternId, amount) {
         return this.call(this.PAYMENT_API + '/payments/purchase', 'POST', {
             user_id: userId,
@@ -96,7 +103,6 @@ const Data = {
         return this.call(this.PAYMENT_API + '/payments/purchases/' + userId);
     },
 
-    // ===== COMMUNITY =====
     getPosts: function() {
         return this.call(this.COMMUNITY_API + '/community/posts');
     },

@@ -16,7 +16,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ===== AZURE SETUP =====
+# azure
+
+
 AZURE_CONNECTION_STRING = os.getenv("AZURE_CONNECTION_STRING", "")
 CONTAINER_NAME = "community-data"
 blob_service = None
@@ -30,44 +32,56 @@ if AZURE_CONNECTION_STRING:
     except:
         pass
 
-# ===== DATA =====
 posts = []
 id_counter = 1
 
-# ===== LOAD FROM AZURE =====
+# load 
+
 def load_posts():
+
     global posts, id_counter
+
     if not container_client:
         return
+    
     try:
+
         blob = container_client.get_blob_client("posts.json")
         data = blob.download_blob().readall()
         backup = json.loads(data)
         posts = backup.get("posts", [])
         id_counter = backup.get("id_counter", 1)
-        print(f"✅ Loaded {len(posts)} posts from Azure")
+        print("loaded posts from azure")
+        
     except:
-        print("ℹ️ No existing posts in Azure, using defaults")
+        print("no posts found in azure")
 
-# ===== SAVE TO AZURE =====
+# save
+
 def save_posts():
+
     if not container_client:
         return
     try:
         backup = {"posts": posts, "id_counter": id_counter, "backup_date": datetime.now().isoformat()}
         blob = container_client.get_blob_client("posts.json")
         blob.upload_blob(json.dumps(backup), overwrite=True)
-        print(f"✅ Saved {len(posts)} posts to Azure")
+        print("post saved to azure")
     except Exception as e:
-        print(f"⚠️ Failed to save posts: {e}")
+        print(f"failed  to save post: {e}")
 
-# ===== SAMPLE POSTS =====
+# sample posts
+
 posts = [
-    {"id": 1, "user_id": 1, "username": "Sarah", "title": "Tips for beginners?", "content": "Any tips on consistent tension?", "likes": 5, "liked_by": [1, 2, 3], "comments": [], "created_at": "2024-01-20T10:00:00"},
-    {"id": 2, "user_id": 2, "username": "Maker", "title": "Favorite yarn brands?", "content": "What's your favorite yarn for amigurumi?", "likes": 3, "liked_by": [1, 2], "comments": [], "created_at": "2024-01-19T14:30:00"}
+    {"id": 1, "user_id": 1, "username": "Sarah", "title": "Tips for beginners?", "content": "what pattern is good for absolute beginners?", "likes": 5, "liked_by": [1, 2, 3], "comments": [], "created_at": "2024-01-20T10:00:00"},
+    {"id": 2, "user_id": 2, "username": "Fiona", "title": "Favorite yarn brands?", "content": "whats your favorite yarn for amigurumi?", "likes": 3, "liked_by": [1, 2], "comments": [], "created_at": "2024-01-19T14:30:00"}
 ]
+
 id_counter = 3
 load_posts()
+
+
+#create post
 
 class PostCreate(BaseModel):
     user_id: int
@@ -75,16 +89,23 @@ class PostCreate(BaseModel):
     title: str
     content: str
 
+#create comment
+
 class CommentCreate(BaseModel):
     user_id: int
     username: str
     content: str
+
+#get post
 
 def find_post_by_id(post_id):
     for post in posts:
         if post["id"] == post_id:
             return post
     return None
+
+
+
 
 @app.get("/health")
 async def health():

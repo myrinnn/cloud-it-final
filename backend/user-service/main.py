@@ -16,7 +16,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ===== AZURE SETUP =====
+# azure
+
 AZURE_CONNECTION_STRING = os.getenv("AZURE_CONNECTION_STRING", "")
 CONTAINER_NAME = "user-data"
 blob_service = None
@@ -27,13 +28,14 @@ if AZURE_CONNECTION_STRING:
     container_client = blob_service.get_container_client(CONTAINER_NAME)
     try:
         container_client.create_container()
-        print("✅ user-data container ready")
+        print("user-data container ready")
     except:
         pass
 
-# ===== DATA =====
 users = []
 id_counter = 1
+
+#load
 
 def load_users():
     global users, id_counter
@@ -45,9 +47,9 @@ def load_users():
         backup = json.loads(data)
         users = backup.get("users", [])
         id_counter = backup.get("id_counter", 1)
-        print(f"✅ Loaded {len(users)} users from Azure")
+        print("loaded users from azure")
     except:
-        print("ℹ️ No existing users in Azure")
+        print("no users found in azure")
 
 def save_users():
     if not container_client:
@@ -56,24 +58,24 @@ def save_users():
         backup = {"users": users, "id_counter": id_counter, "backup_date": datetime.now().isoformat()}
         blob = container_client.get_blob_client("users.json")
         blob.upload_blob(json.dumps(backup), overwrite=True)
-        print(f"✅ Saved {len(users)} users to Azure")
+        print("saved users to azure")
     except Exception as e:
-        print(f"⚠️ Failed to save users: {e}")
+        print(f"failed to save users: {e}")
 
-# ===== LOAD OR CREATE DEFAULTS =====
 load_users()
+#sample users
 
 if not users:
     users = [
         {"id": 1, "username": "Sarah", "password": "password", "wallet": 10.00, "is_seller": True},
-        {"id": 2, "username": "Maker", "password": "password", "wallet": 10.00, "is_seller": False},
+        {"id": 2, "username": "Fiona", "password": "password", "wallet": 10.00, "is_seller": False},
         {"id": 3, "username": "Jane", "password": "password", "wallet": 10.00, "is_seller": False}
     ]
     id_counter = 4
     save_users()
     print("✅ Default users saved to Azure")
 
-# ===== MODELS =====
+
 class UserRegister(BaseModel):
     username: str
     password: str

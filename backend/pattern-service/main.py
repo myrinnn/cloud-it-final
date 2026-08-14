@@ -19,7 +19,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ===== AZURE SETUP =====
+# azure
+
 AZURE_CONNECTION_STRING = os.getenv("AZURE_CONNECTION_STRING", "")
 CONTAINER_IMAGES = "pattern-images"
 CONTAINER_DATA = "pattern-data"
@@ -34,27 +35,30 @@ if AZURE_CONNECTION_STRING:
     container_data = blob_service.get_container_client(CONTAINER_DATA)
     try:
         container_images.create_container()
-        print("✅ pattern-images container ready")
+        print("pattern-images container ready")
     except:
         pass
     try:
         container_data.create_container()
-        print("✅ pattern-data container ready")
+        print("pattern-data container ready")
     except:
         pass
     ACCOUNT_NAME = AZURE_CONNECTION_STRING.split("AccountName=")[1].split(";")[0]
 
-# ===== LOCAL FALLBACK =====
+# local images
+
 os.makedirs("images", exist_ok=True)
 app.mount("/images", StaticFiles(directory="images"), name="images")
 
-# ===== DATA =====
+
 patterns = []
 id_counter = 1
 
 DEFAULT_IMAGE = "/images/0.jpg"
 if ACCOUNT_NAME:
-    DEFAULT_IMAGE = f"https://{ACCOUNT_NAME}.blob.core.windows.net/{CONTAINER_IMAGES}/0.jpg"
+    DEFAULT_IMAGE = f"https://clouditfinalprojstorage.blob.core.windows.net/pattern-images/0.jpg"
+
+#load
 
 def load_patterns():
     global patterns, id_counter
@@ -66,9 +70,11 @@ def load_patterns():
         backup = json.loads(data)
         patterns = backup.get("patterns", [])
         id_counter = backup.get("id_counter", 1)
-        print(f"✅ Loaded {len(patterns)} patterns from Azure")
+        print("patterns loaded from azure")
     except:
-        print("ℹ️ No existing patterns in Azure")
+        print("no patterns found in azure")
+
+#save
 
 def save_patterns():
     if not container_data:
@@ -77,18 +83,19 @@ def save_patterns():
         backup = {"patterns": patterns, "id_counter": id_counter, "backup_date": datetime.now().isoformat()}
         blob = container_data.get_blob_client("patterns.json")
         blob.upload_blob(json.dumps(backup), overwrite=True)
-        print(f"✅ Saved {len(patterns)} patterns to Azure")
+        print("saved patterns to azure")
     except Exception as e:
-        print(f"⚠️ Failed to save patterns: {e}")
+        print(f"failed to save patterns: {e}")
 
-# ===== SAMPLE PATTERNS =====
+# sample patterns
+
 sample_patterns = [
-    {"id": 1, "title": "Cozy Beanie", "description": "A very cute crochet beanie", "craft_type": "crochet", "skill_level": "beginner", "category": "accessories", "price": 4.99, "seller_id": 1, "image_url": DEFAULT_IMAGE, "pattern_details": "Chain 40. Row 1: SC in each stitch."},
-    {"id": 2, "title": "Square Blanket", "description": "Square blanket for cold winter days", "craft_type": "crochet", "skill_level": "beginner", "category": "home", "price": 6.99, "seller_id": 1, "image_url": DEFAULT_IMAGE, "pattern_details": "Make 12 granny squares. Join all squares."},
-    {"id": 3, "title": "Amigurumi Bear", "description": "Cutest amigurumi bear ever!!!", "craft_type": "crochet", "skill_level": "intermediate", "category": "toys", "price": 8.99, "seller_id": 2, "image_url": DEFAULT_IMAGE, "pattern_details": "Magic ring: 6 SC. Increase to 12, 18, 24."},
-    {"id": 4, "title": "Cable Knit Sweater", "description": "Must have for all fashion girlies!", "craft_type": "knit", "skill_level": "advanced", "category": "garments", "price": 12.99, "seller_id": 3, "image_url": DEFAULT_IMAGE, "pattern_details": "Cast on 120. Ribbing: K2, P2 for 3 inches."},
-    {"id": 5, "title": "Lace Shawl", "description": "For the classy ladies who love crochet and knit", "craft_type": "both", "skill_level": "advanced", "category": "accessories", "price": 0, "seller_id": 1, "image_url": DEFAULT_IMAGE, "pattern_details": "Cast on 5. Row 1: K1, YO, K1."},
-    {"id": 6, "title": "Crochet bottle holder", "description": "Customize your boring water bottle!", "craft_type": "crochet", "skill_level": "beginner", "category": "accessories", "price": 0, "seller_id": 2, "image_url": DEFAULT_IMAGE, "pattern_details": "Chain 10. Row 1: SC in 2nd chain."}
+    {"id": 1, "title": "Cozy Beanie", "description": "A very cute crochet beanie", "craft_type": "crochet", "skill_level": "beginner", "category": "accessories", "price": 4.99, "seller_id": 1, "image_url": "https://clouditfinalprojstorage.blob.core.windows.net/pattern-images/1.jpg", "pattern_details": "Chain 40. Row 1: SC in each stitch."},
+    {"id": 2, "title": "Square Blanket", "description": "Square blanket for cold winter days", "craft_type": "crochet", "skill_level": "beginner", "category": "home", "price": 6.99, "seller_id": 1, "image_url": "https://clouditfinalprojstorage.blob.core.windows.net/pattern-images/2.jpg", "pattern_details": "Make 12 granny squares. Join all squares."},
+    {"id": 3, "title": "Amigurumi Bear", "description": "Cutest amigurumi bear ever!!!", "craft_type": "crochet", "skill_level": "intermediate", "category": "toys", "price": 8.99, "seller_id": 2, "image_url": "https://clouditfinalprojstorage.blob.core.windows.net/pattern-images/3.jpg", "pattern_details": "Magic ring: 6 SC. Increase to 12, 18, 24."},
+    {"id": 4, "title": "Cable Knit Sweater", "description": "Must have for all fashion girlies!", "craft_type": "knit", "skill_level": "advanced", "category": "garments", "price": 12.99, "seller_id": 3, "image_url": "https://clouditfinalprojstorage.blob.core.windows.net/pattern-images/4.jpg", "pattern_details": "Cast on 120. Ribbing: K2, P2 for 3 inches."},
+    {"id": 5, "title": "Lace Shawl", "description": "For the classy ladies who love crochet and knit", "craft_type": "both", "skill_level": "advanced", "category": "accessories", "price": 0, "seller_id": 1, "image_url": "https://clouditfinalprojstorage.blob.core.windows.net/pattern-images/5.jpg", "pattern_details": "Cast on 5. Row 1: K1, YO, K1."},
+    {"id": 6, "title": "Crochet bottle holder", "description": "Customize your boring water bottle!", "craft_type": "crochet", "skill_level": "beginner", "category": "accessories", "price": 0, "seller_id": 2, "image_url": "https://clouditfinalprojstorage.blob.core.windows.net/pattern-images/6.jpg", "pattern_details": "Chain 10. Row 1: SC in 2nd chain."}
 ]
 
 load_patterns()
@@ -97,9 +104,9 @@ if not patterns:
     patterns = sample_patterns.copy()
     id_counter = 7
     save_patterns()
-    print("✅ Default patterns saved to Azure")
+    print("sample patterns saved to azure")
 
-USER_SERVICE_URL = "http://user-service:8080"
+USER_SERVICE_URL = "https://user-service-0cbz.onrender.com"
 
 def get_seller_name(seller_id):
     try:

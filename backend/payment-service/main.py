@@ -17,7 +17,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ===== AZURE SETUP =====
+# azure
+
 AZURE_CONNECTION_STRING = os.getenv("AZURE_CONNECTION_STRING", "")
 CONTAINER_NAME = "payment-data"
 blob_service = None
@@ -28,13 +29,15 @@ if AZURE_CONNECTION_STRING:
     container_client = blob_service.get_container_client(CONTAINER_NAME)
     try:
         container_client.create_container()
-        print("✅ payment-data container ready")
+        print("payment-data container ready")
     except:
         pass
 
-# ===== DATA =====
+
 purchases = []
 id_counter = 1
+
+#load
 
 def load_purchases():
     global purchases, id_counter
@@ -46,9 +49,12 @@ def load_purchases():
         backup = json.loads(data)
         purchases = backup.get("purchases", [])
         id_counter = backup.get("id_counter", 1)
-        print(f"✅ Loaded {len(purchases)} purchases from Azure")
+        print("loaded purchases from azure")
     except:
-        print("ℹ️ No existing purchases in Azure")
+        print("no purchases found in azure")
+
+
+#save
 
 def save_purchases():
     if not container_client:
@@ -57,9 +63,9 @@ def save_purchases():
         backup = {"purchases": purchases, "id_counter": id_counter, "backup_date": datetime.now().isoformat()}
         blob = container_client.get_blob_client("purchases.json")
         blob.upload_blob(json.dumps(backup), overwrite=True)
-        print(f"✅ Saved {len(purchases)} purchases to Azure")
+        print("savedpurchases to azure")
     except Exception as e:
-        print(f"⚠️ Failed to save purchases: {e}")
+        print(f"failed to save purchases: {e}")
 
 load_purchases()
 
@@ -67,7 +73,7 @@ if not purchases:
     purchases = []
     id_counter = 1
     save_purchases()
-    print("✅ Empty purchases initialized in Azure")
+    print("empty purchase file")
 
 class PurchaseCreate(BaseModel):
     user_id: int

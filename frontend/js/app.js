@@ -1,67 +1,97 @@
 let allPatterns = [];
 let allPosts = [];
 
-// ============================================================
-// NAVIGATION
-// ============================================================
+//nav bar
+
 function showPage(page) {
+
+    //hide pages
     document.querySelectorAll('.page').forEach(p => {
         p.classList.remove('active');
         p.style.display = 'none';
     });
 
+    //allow for select page to be visible
     let target = document.getElementById('page-' + page);
     if (target) {
         target.classList.add('active');
         target.style.display = 'block';
     }
 
+    //functions for loading each page
     if (page === 'home') loadHome();
     if (page === 'marketplace') loadMarketplace();
     if (page === 'profile') loadProfile();
     if (page === 'community') loadCommunity();
 }
 
-// ============================================================
-// USER DISPLAY
-// ============================================================
+// nav bar user display
+
 async function updateUserDisplay() {
+
+    //get user
+
     let user = await Data.getCurrentUser();
 
     if (user) {
+
         let wallet = (user.wallet || 0).toFixed(2);
+
+        //user view
         document.getElementById('userDisplay').textContent = user.username;
         document.getElementById('walletDisplay').style.display = 'inline';
+
         document.getElementById('walletAmount').textContent = '€' + wallet;
         document.getElementById('logoutBtn').style.display = 'inline';
+
+
         document.getElementById('addPatternBtn').style.display = user.is_seller ? 'inline' : 'none';
+
         document.getElementById('loginNavBtn').style.display = 'none';
         document.getElementById('registerNavBtn').style.display = 'none';
     } else {
+
+        //guest view
+
         document.getElementById('userDisplay').textContent = 'Guest';
         document.getElementById('walletDisplay').style.display = 'none';
+
         document.getElementById('logoutBtn').style.display = 'none';
+
+
         document.getElementById('addPatternBtn').style.display = 'none';
+
         document.getElementById('loginNavBtn').style.display = 'inline';
         document.getElementById('registerNavBtn').style.display = 'inline';
     }
 }
 
-// ============================================================
-// LOGIN
-// ============================================================
+//login
+
 async function login(event) {
+
+
     event.preventDefault();
+
+    //get input
+
     let username = document.getElementById('loginUsername').value.trim();
     let password = document.getElementById('loginPassword').value;
 
+    //set current user, refresh page
+
     try {
+
         let result = await Data.login(username, password);
+
         if (result.success) {
+
             Data.setUserId(parseInt(result.user.id));
+
             await updateUserDisplay();
             document.getElementById('loginForm').reset();
             showPage('home');
+
             alert('Welcome back, ' + username + '!');
         }
     } catch (error) {
@@ -69,54 +99,73 @@ async function login(event) {
     }
 }
 
-// ============================================================
-// REGISTER
-// ============================================================
+//registration
+
 async function register(event) {
+    
     event.preventDefault();
+
+    //get input
+
     let username = document.getElementById('regUsername').value.trim();
     let password = document.getElementById('regPassword').value;
     let confirm = document.getElementById('regConfirm').value;
 
+    //confirm password match
+
     if (password !== confirm) {
+
         alert('Passwords do not match');
         return;
     }
 
+    //create new user in data, refresh page
+
     try {
         let result = await Data.register(username, password);
         if (result.success) {
+
             Data.setUserId(parseInt(result.user.id));
             await updateUserDisplay();
             document.getElementById('registerForm').reset();
             showPage('home');
-            alert('Welcome ' + username + '! You get 10 euros free credit.');
+            alert('Welcome ' + username + '! All users get 10 euros for testing purposes.');
+
         }
-    } catch (error) {
+    } 
+    catch (error) {
+
         alert(error.message);
     }
 }
 
-// ============================================================
-// LOGOUT
-// ============================================================
+//log out
+
 function logout() {
+    
     Data.logout();
+
+    //refresh page
     updateUserDisplay();
     showPage('home');
     alert('Logged out');
 }
 
-// ============================================================
-// HOME
-// ============================================================
+//home page
+
 async function loadHome() {
+
     try {
+
         let patterns = await Data.getPatterns();
         allPatterns = patterns;
+
         let sellers = new Set(patterns.map(p => p.seller_name));
+
         let posts = await Data.getPosts();
         allPosts = posts;
+
+        //get stats
 
         document.getElementById('totalPatterns').textContent = patterns.length;
         document.getElementById('totalSellers').textContent = sellers.size;
@@ -124,35 +173,43 @@ async function loadHome() {
 
         let featured = patterns.slice(0, 4);
         renderPatterns(featured, 'featuredGrid');
+
     } catch (error) {
         console.log('Home error:', error);
         document.getElementById('featuredGrid').innerHTML = '<p>Error loading patterns</p>';
     }
 }
 
-// ============================================================
-// MARKETPLACE
-// ============================================================
+//marketplace page
+
 async function loadMarketplace() {
     try {
+
+        //render pattern grid
+
         let patterns = await Data.getPatterns();
         allPatterns = patterns;
         renderPatterns(patterns, 'patternGrid');
+
     } catch (error) {
         console.log('Marketplace error:', error);
         document.getElementById('patternGrid').innerHTML = '<p>Error loading patterns</p>';
     }
 }
 
-// ============================================================
-// SEARCH
-// ============================================================
+//search patterns
+
 function searchPatterns() {
+
+    //get input
+
     let query = document.getElementById('searchInput').value.toLowerCase();
     let skill = document.getElementById('skillFilter').value;
     let price = document.getElementById('priceFilter').value;
 
     let patterns = allPatterns;
+
+    // filters non queried patterns
 
     if (query) {
         patterns = patterns.filter(p =>
@@ -160,9 +217,13 @@ function searchPatterns() {
             p.description.toLowerCase().includes(query)
         );
     }
+
+    //filters patterns not matching specifications
+
     if (skill !== 'all') {
         patterns = patterns.filter(p => p.skill_level === skill);
     }
+
     if (price === 'free') {
         patterns = patterns.filter(p => p.price === 0);
     } else if (price === 'paid') {
@@ -172,23 +233,28 @@ function searchPatterns() {
     renderPatterns(patterns, 'patternGrid');
 }
 
-// ============================================================
-// RENDER PATTERNS
-// ============================================================
+//render pattern grid
+
 function renderPatterns(patterns, containerId) {
+    
     let container = document.getElementById(containerId);
     if (!container) return;
+
+    //no patterns yet text
 
     if (patterns.length === 0) {
         container.innerHTML = '<p>No patterns found</p>';
         return;
     }
 
+    //adds html 
+
     let html = '';
     patterns.forEach(p => {
         let img = p.image_url;
+
         if (img && img.startsWith('/images/')) {
-            img = 'http://localhost:8081' + img;
+            img = 'https://pattern-service-6jrp.onrender.com' + img;
         }
 
         html += `
@@ -208,24 +274,32 @@ function renderPatterns(patterns, containerId) {
     container.innerHTML = html;
 }
 
-// ============================================================
-// VIEW PATTERN
-// ============================================================
+//pattern view popup
+
 async function viewPattern(id) {
+
+    //get pattern
+
     let pattern = allPatterns.find(p => p.id === id);
     if (!pattern) return;
+
+    //get user
 
     let user = await Data.getCurrentUser();
     let hasPurchased = false;
 
     if (user) {
+
         try {
             let purchases = await Data.getPurchases(user.id);
             hasPurchased = purchases.purchases && purchases.purchases.some(p => p.pattern_id === id);
         } catch (e) {}
     }
 
+
     let isOwner = user && user.is_seller && pattern.seller_id === user.id;
+
+    //adds buttons
 
     let actionsHtml = '<div style="margin-top:15px;padding-top:15px;border-top:1px solid #eee;display:flex;flex-wrap:wrap;gap:10px;">';
     
@@ -241,14 +315,16 @@ async function viewPattern(id) {
     
     actionsHtml += '</div>';
 
+    //adds popup text
+
     let walletInfo = '';
     if (user) {
-        walletInfo = `<p><strong>Your balance:</strong> €${(user.wallet || 0).toFixed(2)}</p>`;
+        walletInfo = `<p><strong>Your balance: </strong> €${(user.wallet || 0).toFixed(2)}</p>`;
     }
 
     let html = `
         <div style="display:flex;flex-direction:column;gap:12px;">
-            <img src="${pattern.image_url || '/images/0.jpg'}" 
+            <img src="${pattern.image_url || 'https://pattern-service-6jrp.onrender.com/images/0.jpg'}" 
                  alt="${pattern.title}" 
                  style="width:100%;max-height:250px;object-fit:cover;border-radius:4px;"
                  onerror="this.src='/images/0.jpg'">
@@ -268,16 +344,20 @@ async function viewPattern(id) {
     document.getElementById('patternPopup').style.display = 'flex';
 }
 
-// ============================================================
-// BUY PATTERN
-// ============================================================
+//buy pattern
+
 async function buyPattern(id, price) {
+
+    //get user
     let user = await Data.getCurrentUser();
     if (!user) {
+
         alert('Please login first');
         showPage('login');
         return;
     }
+
+    //check funds
 
     if ((user.wallet || 0) < price) {
         alert('Insufficient funds! You have €' + (user.wallet || 0).toFixed(2));
@@ -285,6 +365,8 @@ async function buyPattern(id, price) {
     }
 
     if (!confirm('Buy this pattern for €' + price.toFixed(2) + '?')) return;
+
+    //update data, refresh
 
     try {
         let result = await Data.purchase(user.id, id, price);
@@ -304,10 +386,12 @@ async function buyPattern(id, price) {
     }
 }
 
-// ============================================================
-// GET FREE PATTERN
-// ============================================================
+//get free pattern
+
 async function getFreePattern(id) {
+
+    //get user
+
     let user = await Data.getCurrentUser();
     if (!user) {
         alert('Please login first');
@@ -315,10 +399,13 @@ async function getFreePattern(id) {
         return;
     }
 
+
+    //update data, refresh
     try {
         let result = await Data.purchase(user.id, id, 0);
         if (result.success) {
-            alert('Pattern added to your library!');
+            alert('Pattern details now available');
+
             closePopup('patternPopup');
 
             if (result.purchase && result.purchase.pattern_details) {
@@ -327,65 +414,91 @@ async function getFreePattern(id) {
                 document.getElementById('detailsPopup').style.display = 'flex';
             }
         }
+
     } catch (error) {
         alert(error.message);
     }
 }
 
-// ============================================================
-// SHOW DETAILS
-// ============================================================
+//pattern details popup
+
 function showDetails(id) {
+
+    //get pattern
+
     let pattern = allPatterns.find(p => p.id === id);
     if (!pattern) return;
+
+    //add text
 
     document.getElementById('detailsTitle').textContent = pattern.title + ' - Pattern Details';
     document.getElementById('detailsContent').textContent = pattern.pattern_details || 'No details available.';
     document.getElementById('detailsPopup').style.display = 'flex';
+
     closePopup('patternPopup');
+
 }
 
-// ============================================================
-// DELETE PATTERN
-// ============================================================
+//delete pattern
+
 async function deletePattern(id) {
     if (!confirm('Delete this pattern?')) return;
+
+    //get user
+
     let user = await Data.getCurrentUser();
     if (!user) return;
 
+    //update data, refresh
+
     try {
         await Data.deletePattern(id, user.id);
+
         alert('Pattern deleted');
+
         closePopup('patternPopup');
         loadMarketplace();
+
     } catch (error) {
         alert(error.message);
     }
 }
 
-// ============================================================
-// ADD PATTERN
-// ============================================================
+//add pattern btn
+
 async function showAddPattern() {
+
+    //get user
+
     let user = await Data.getCurrentUser();
     if (!user) {
         alert('Please login first');
         showPage('login');
         return;
     }
+
     if (!user.is_seller) {
         alert('You must be a designer to add patterns');
         return;
     }
+
+    //open popup
+
     document.getElementById('addPatternPopup').style.display = 'flex';
     document.getElementById('addPatternForm').reset();
 }
 
+//add pattern
+
 async function addPattern(event) {
     event.preventDefault();
 
+    //get user
+
     let user = await Data.getCurrentUser();
     if (!user) return;
+
+    //get input
 
     let data = {
         title: document.getElementById('apTitle').value.trim(),
@@ -400,16 +513,22 @@ async function addPattern(event) {
         category: 'accessories'
     };
 
+    //validate input
+
     let validation = Security.validatePattern(data);
     if (!validation.valid) {
         alert(Object.values(validation.errors).join('\n'));
         return;
     }
 
+    //update data, refresh
+
     try {
         let result = await Data.createPattern(data);
         if (result) {
+
             alert('Pattern published!');
+
             closePopup('addPatternPopup');
             document.getElementById('addPatternForm').reset();
             loadMarketplace();
@@ -419,10 +538,12 @@ async function addPattern(event) {
     }
 }
 
-// ============================================================
-// PROFILE
-// ============================================================
+//user profile page
+
 async function loadProfile() {
+
+    //get user
+
     let user = await Data.getCurrentUser();
     
     if (!user) {
@@ -435,7 +556,12 @@ async function loadProfile() {
         return;
     }
 
+
+
     try {
+
+        //get data
+
         let wallet = user.wallet || 0;
         let purchases = await Data.getPurchases(user.id);
         let purchasedPatterns = purchases.purchases || [];
@@ -449,10 +575,13 @@ async function loadProfile() {
             }
         }
 
+
         let userPatterns = [];
         if (user.is_seller) {
             userPatterns = allPatternsData.filter(p => p.seller_id === user.id);
         }
+
+        //adds text
 
         let html = `
             <div style="border:1px solid #ddd;padding:25px;border-radius:8px;max-width:600px;background:white;">
@@ -511,12 +640,17 @@ async function loadProfile() {
     }
 }
 
-// ============================================================
-// ADD FUNDS
-// ============================================================
+//add funds
+
+
 async function addFunds() {
+
+    //get user
+
     let user = await Data.getCurrentUser();
     if (!user) return;
+
+    //get input
 
     let amount = prompt('Enter amount to add:', '5');
     if (!amount) return;
@@ -526,6 +660,8 @@ async function addFunds() {
         return;
     }
 
+    //updates data, refresh
+    
     try {
         let result = await Data.addFunds(user.id, amount);
         if (result.success) {
@@ -538,14 +674,19 @@ async function addFunds() {
     }
 }
 
-// ============================================================
-// BECOME SELLER
-// ============================================================
+//become seller
+
 async function becomeSeller() {
+
+    //get user
+
+
     let user = await Data.getCurrentUser();
     if (!user) return;
 
     if (!confirm('Become a pattern seller?')) return;
+
+    //updates data, refresh
 
     try {
         let result = await Data.becomeSeller(user.id);
@@ -554,32 +695,45 @@ async function becomeSeller() {
             alert('You are now a designer!');
             loadProfile();
         }
+
     } catch (error) {
         alert(error.message);
     }
 }
 
-// ============================================================
-// COMMUNITY
-// ============================================================
+//community page
+
 async function loadCommunity() {
     try {
+
+        //get posts
+
         let posts = await Data.getPosts();
         allPosts = posts;
         renderPosts(posts);
+
+
     } catch (error) {
         console.log('Community error:', error);
     }
 }
 
 async function renderPosts(posts) {
+    
     let container = document.getElementById('communityContent');
+
+    //no posts
+
     if (!posts || posts.length === 0) {
         container.innerHTML = '<p style="text-align:center;padding:20px;color:#999;">No posts yet</p>';
         return;
     }
 
+    //get user
+
     let user = await Data.getCurrentUser();
+
+    //add html
 
     let html = '';
     posts.forEach(post => {
@@ -615,21 +769,36 @@ async function renderPosts(posts) {
             </div>
         `;
     });
+
     container.innerHTML = html;
+
 }
+
+
+//toggle comments
 
 function toggleComments(postId) {
+
     let div = document.getElementById('comments-' + postId);
     div.style.display = div.style.display === 'none' ? 'block' : 'none';
+
 }
 
+//like, dislike
+
 async function toggleLike(postId) {
+
+    //get user
+
     let user = await Data.getCurrentUser();
+
     if (!user) {
         alert('Please login first');
         showPage('login');
         return;
     }
+
+    //updates daata, refresh
 
     try {
         let result = await Data.toggleLike(postId, user.id);
@@ -641,12 +810,21 @@ async function toggleLike(postId) {
     }
 }
 
+
+//add comment
+
 async function addComment(postId) {
     let user = await Data.getCurrentUser();
+
+    //get user
+
     if (!user) {
+
         alert('Please login first');
         return;
     }
+
+    //get input
 
     let input = document.getElementById('comment-' + postId);
     let content = input.value.trim();
@@ -654,6 +832,8 @@ async function addComment(postId) {
         alert('Enter a comment');
         return;
     }
+
+    //updates data, refresh
 
     try {
         let result = await Data.addComment(postId, {
@@ -670,22 +850,32 @@ async function addComment(postId) {
     }
 }
 
-// ============================================================
-// ADD POST
-// ============================================================
+//add post
+
+
 function showAddPost() {
+
+    //get user
+
     let user = Data.getCurrentUser();
     if (!user) {
         alert('Please login first');
         showPage('login');
         return;
     }
+
+    //add post popup
+
     document.getElementById('addPostPopup').style.display = 'flex';
     document.getElementById('addPostForm').reset();
 }
 
+//add post popup
+
 async function addPost(event) {
     event.preventDefault();
+
+    //get user, input
 
     let user = await Data.getCurrentUser();
     if (!user) return;
@@ -697,11 +887,15 @@ async function addPost(event) {
         content: document.getElementById('postContent').value.trim()
     };
 
+    //validate input
+
     let validation = Security.validatePost(data);
     if (!validation.valid) {
         alert(Object.values(validation.errors).join('\n'));
         return;
     }
+
+    //updates data, refresh
 
     try {
         let result = await Data.createPost(data);
@@ -711,14 +905,15 @@ async function addPost(event) {
             document.getElementById('addPostForm').reset();
             loadCommunity();
         }
+
     } catch (error) {
         alert(error.message);
     }
 }
 
-// ============================================================
-// POPUP HELPERS
-// ============================================================
+//close popup
+
+
 function closePopup(id) {
     document.getElementById(id).style.display = 'none';
 }
@@ -729,9 +924,8 @@ document.addEventListener('click', function(e) {
     }
 });
 
-// ============================================================
-// INIT
-// ============================================================
+
+
 updateUserDisplay();
 showPage('home');
-console.log('All You Can Knit ready!');
+console.log('website ready!');
