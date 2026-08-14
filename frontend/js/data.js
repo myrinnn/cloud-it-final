@@ -1,8 +1,8 @@
 const Data = {
-    USER_API: 'http://localhost:8080/api',
-    PATTERN_API: 'http://localhost:8081/api',
-    COMMUNITY_API: 'http://localhost:8082/api',
-    PAYMENT_API: 'http://localhost:8083/api',
+    USER_API: 'https://user-service-0cbz.onrender.com/api',
+    PATTERN_API: 'https://pattern-service-6jrp.onrender.com/api',
+    COMMUNITY_API: 'https://community-service-ev6n.onrender.com/api',
+    PAYMENT_API: 'https://payment-service-ayj0.onrender.com/api',
     
     // ===== USER ID STORAGE =====
     setUserId: function(id) {
