@@ -106,6 +106,7 @@ if not patterns:
     save_patterns()
     print("sample patterns saved to azure")
 
+
 USER_SERVICE_URL = "https://user-service-0cbz.onrender.com"
 
 def get_seller_name(seller_id):
