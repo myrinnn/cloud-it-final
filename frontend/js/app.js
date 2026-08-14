@@ -280,7 +280,7 @@ async function viewPattern(id) {
 
     //get pattern
 
-    let pattern = allPatterns.find(p => p.id === id);
+    let pattern = await Data.getPattern(id);
     if (!pattern) return;
 
     //get user
