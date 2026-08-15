@@ -95,7 +95,7 @@ async def purchase_pattern(purchase_data: PurchaseCreate):
     balance = 0
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
-            user_response = await client.get(f"http://user-service:8080/api/users/{purchase_data.user_id}")
+            user_response = await client.get(f"https://user-service-0cbz.onrender.com/api/users/{purchase_data.user_id}")
             if user_response.status_code == 200:
                 user = user_response.json()
                 current_balance = user.get("wallet", 0)
@@ -105,7 +105,7 @@ async def purchase_pattern(purchase_data: PurchaseCreate):
                 
                 if purchase_data.amount > 0:
                     deduct_response = await client.post(
-                        f"http://user-service:8080/api/users/{purchase_data.user_id}/wallet/deduct",
+                        f"https://user-service-0cbz.onrender.com/api/users/{purchase_data.user_id}/wallet/deduct",
                         json={"amount": purchase_data.amount}
                     )
                     if deduct_response.status_code == 200:

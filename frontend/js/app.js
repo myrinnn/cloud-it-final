@@ -291,12 +291,11 @@ async function viewPattern(id) {
     if (user) {
 
         try {
-            let purchases = await Data.getPurchases(user.id);
+            let result = await Data.getPurchases(user.id);
             
+            let purchases = result.purchases || [];
             hasPurchased = purchases.some(p => p.pattern_id === id);
-            if (!hasPurchased && purchases && purchases.purchases) {
-                hasPurchased = purchases.purchases.some(p => p.pattern_id === id);
-            }
+
         } catch (e) {}
     }
 
@@ -309,11 +308,11 @@ async function viewPattern(id) {
     
     if (isOwner) {
         actionsHtml += `<button onclick="deletePattern(${pattern.id})" style="background:#d32f2f;color:white;border:none;padding:8px 18px;border-radius:4px;cursor:pointer;">Delete Pattern</button>`;
-    } else if (pattern.price === 0) {
-        actionsHtml += `<button onclick="getFreePattern(${pattern.id})" style="background:#1976d2;color:white;border:none;padding:8px 18px;border-radius:4px;cursor:pointer;">Get Pattern (Free)</button>`;
     } else if (hasPurchased) {
         actionsHtml += `<button onclick="showDetails(${pattern.id})" style="background:#6b2d5c;color:white;border:none;padding:8px 18px;border-radius:4px;cursor:pointer;">View Full Pattern</button>`;
-    } else {
+    } else if (pattern.price === 0) {
+        actionsHtml += `<button onclick="getFreePattern(${pattern.id})" style="background:#1976d2;color:white;border:none;padding:8px 18px;border-radius:4px;cursor:pointer;">Get Pattern (Free)</button>`;
+    }  else {
         actionsHtml += `<button onclick="buyPattern(${pattern.id}, ${pattern.price})" style="background:#2e7d32;color:white;border:none;padding:8px 18px;border-radius:4px;cursor:pointer;">Buy €${pattern.price.toFixed(2)}</button>`;
     }
     
@@ -375,6 +374,10 @@ async function buyPattern(id, price) {
     try {
         let result = await Data.purchase(user.id, id, price);
         if (result.success) {
+            
+            user.wallet = result.balance;
+            Data.setUserId(user.id);
+
             await updateUserDisplay();
             alert('Purchased! Balance: €' + result.balance.toFixed(2));
             closePopup('patternPopup');
