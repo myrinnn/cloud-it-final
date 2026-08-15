@@ -217,7 +217,7 @@ async def get_pattern_purchases(pattern_id: int):
     import requests
     try:
         response = requests.get(
-            "https://payment-service-0cbz.onrender.com/api/payments/purchases/all",
+            "https://payment-service-ayj0.onrender.com/api/payments/purchases/all",
             timeout=5
         )
         
