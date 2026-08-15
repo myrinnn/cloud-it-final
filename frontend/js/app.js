@@ -54,7 +54,7 @@ async function updateUserDisplay() {
         //guest view
 
 
-        //only instance of jQuery, because on god even if you pointed a gun to my head and told me to do more i would only flop on the ground and cry
+        //only instance of jQuery, because ON GOD even if you pointed a gun to my head and told me to do more i would only flop on the ground and cry
         $('#userDisplay').text('Guest');
         document.getElementById('walletDisplay').style.display = 'none';
 
@@ -309,7 +309,10 @@ async function viewPattern(id) {
     let actionsHtml = '<div style="margin-top:15px;padding-top:15px;border-top:1px solid #eee;display:flex;flex-wrap:wrap;gap:10px;">';
     
     if (isOwner) {
-        actionsHtml += `<button onclick="deletePattern(${pattern.id})" style="background:#d32f2f;color:white;border:none;padding:8px 18px;border-radius:4px;cursor:pointer;">Delete Pattern</button>`;
+        actionsHtml += `
+        <button onclick="editPattern(${p.id})" class="btn-secondary">Edit</button>
+        <button onclick="deletePattern(${pattern.id})" style="background:#d32f2f;color:white;border:none;padding:8px 18px;border-radius:4px;cursor:pointer;">Delete Pattern</button>
+        `;
     } else if (hasPurchased) {
         actionsHtml += `<button onclick="showDetails(${pattern.id})" style="background:#6b2d5c;color:white;border:none;padding:8px 18px;border-radius:4px;cursor:pointer;">View Full Pattern</button>`;
     } else if (pattern.price === 0) {
@@ -477,6 +480,41 @@ async function deletePattern(id) {
     }
 }
 
+//edit pattern
+
+async function editPattern(id) {
+
+    //get user
+
+    let user = await Data.getCurrentUser();
+    if (!user) {
+        alert('Please login first');
+        return;
+    }
+
+    //get pattern
+    
+    let pattern = allPatterns.find(p => p.id === id);
+    if (!pattern) {
+        alert('Pattern not found');
+        return;
+    }
+    
+    // get input
+    document.getElementById('editId').value = pattern.id;
+    document.getElementById('apTitle').value = pattern.title;
+    document.getElementById('apDescription').value = pattern.description;
+    document.getElementById('apPrice').value = pattern.price;
+    document.getElementById('apImage').value = pattern.image_url || '';
+    document.getElementById('apDetails').value = pattern.pattern_details || '';
+    
+    document.getElementById('formTitle').textContent = 'Edit Pattern';
+    document.getElementById('patternForm').classList.remove('hidden');
+    
+    // edit popup
+    document.getElementById('patternForm').scrollIntoView({ behavior: 'smooth' });
+}
+
 //add pattern btn
 
 async function showAddPattern() {
@@ -509,6 +547,7 @@ async function addPattern(event) {
     let user = await Data.getCurrentUser();
     if (!user) return;
 
+    let editId = document.getElementById('editId').value;
     let imageFile = document.getElementById('apImageFile').files[0];
 
     let data = {
@@ -524,40 +563,73 @@ async function addPattern(event) {
         category: 'accessories'
     };
 
+
     let validation = Security.validatePattern(data);
     if (!validation.valid) {
         alert(Object.values(validation.errors).join('\n'));
         return;
     }
 
+if (editId) {
     try {
-        let result = await Data.createPattern(data);
-        if (result) {
-            let patternId = result.id;
+        
+        if (imageFile) {
+            let formData = new FormData();
+            formData.append('file', imageFile);
             
-            if (imageFile) {
-                let formData = new FormData();
-                formData.append('file', imageFile);
-                
-                let response = await fetch(`https://pattern-service-6jrp.onrender.com/api/patterns/upload-image/${patternId}`, {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                let uploadResult = await response.json();
-                if (uploadResult.image_url) {
-                    await Data.updatePattern(patternId, { image_url: uploadResult.image_url });
-                }
+            let response = await fetch(`https://pattern-service-6jrp.onrender.com/api/patterns/upload-image/${editId}`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            let uploadResult = await response.json();
+            if (uploadResult.image_url) {
+                data.image_url = uploadResult.image_url;
             }
-            
-            alert('Pattern published!');
-            closePopup('addPatternPopup');
-            document.getElementById('addPatternForm').reset();
-            document.getElementById('imagePreview').innerHTML = '';
-            loadMarketplace();
         }
+        
+        let result = await Data.updatePattern(editId, data);
+        
+        alert('Pattern updated!');
+        closePopup('addPatternPopup');
+        document.getElementById('addPatternForm').reset();
+        document.getElementById('editId').value = '';
+        document.getElementById('imagePreview').innerHTML = '';
+        loadMarketplace();
     } catch (error) {
         alert(error.message);
+    }
+} else {
+
+        try {
+            let result = await Data.createPattern(data);
+            if (result) {
+                let patternId = result.id;
+                
+                if (imageFile) {
+                    let formData = new FormData();
+                    formData.append('file', imageFile);
+                    
+                    let response = await fetch(`https://pattern-service-6jrp.onrender.com/api/patterns/upload-image/${patternId}`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    let uploadResult = await response.json();
+                    if (uploadResult.image_url) {
+                        await Data.updatePattern(patternId, { image_url: uploadResult.image_url });
+                    }
+                }
+                
+                alert('Pattern published!');
+                closePopup('addPatternPopup');
+                document.getElementById('addPatternForm').reset();
+                document.getElementById('imagePreview').innerHTML = '';
+                loadMarketplace();
+            }
+        } catch (error) {
+            alert(error.message);
+        }
     }
 }
 

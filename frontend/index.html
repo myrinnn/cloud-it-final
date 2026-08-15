@@ -194,6 +194,7 @@
                 <button onclick="closePopup('addPatternPopup')">X</button>
                 <h3>Add Pattern</h3>
                 <form id="addPatternForm" onsubmit="addPattern(event)">
+                    <input type="hidden" id="editId" value="">
                     <input type="text" id="apTitle" placeholder="Title" required>
                     <textarea id="apDescription" placeholder="Description" required></textarea>
                     <input type="number" id="apPrice" placeholder="Price (0 = free)" value="0" step="0.01">
