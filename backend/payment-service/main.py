@@ -142,6 +142,10 @@ async def get_purchases(user_id: int):
     user_purchases = [p for p in purchases if p["user_id"] == user_id]
     return {"purchases": user_purchases}
 
+@app.get("/api/payments/purchases/all")
+async def get_all_purchases():
+    return {"purchases": purchases}
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8083)

@@ -214,32 +214,36 @@ if __name__ == "__main__":
 
 @app.get("/api/patterns/{pattern_id}/purchases")
 async def get_pattern_purchases(pattern_id: int):
-    
     import requests
     try:
         response = requests.get(
-            f"https://payment-service-0cbz.onrender.com/api/payments/purchases",
+            "https://payment-service-0cbz.onrender.com/api/payments/purchases/all",
             timeout=5
         )
+        
         if response.status_code == 200:
-            all_purchases = response.json()
-            if isinstance(all_purchases, dict) and "purchases" in all_purchases:
-                all_purchases = all_purchases["purchases"]
+            data = response.json()
+            all_purchases = data.get("purchases", [])
+            
+            # Filter for this pattern
             pattern_purchases = [p for p in all_purchases if p["pattern_id"] == pattern_id]
             
-            
+            # Get buyer usernames
             for p in pattern_purchases:
-                user_response = requests.get(
-                    f"https://user-service-0cbz.onrender.com/api/users/{p['user_id']}",
-                    timeout=5
-                )
-                if user_response.status_code == 200:
-                    user = user_response.json()
-                    p["buyer_username"] = user.get("username", "Unknown")
+                try:
+                    user_response = requests.get(
+                        f"https://user-service-0cbz.onrender.com/api/users/{p['user_id']}",
+                        timeout=3
+                    )
+                    if user_response.status_code == 200:
+                        user = user_response.json()
+                        p["buyer_username"] = user.get("username", "Unknown")
+                except:
+                    p["buyer_username"] = "Unknown"
             
             return {"purchases": pattern_purchases}
         else:
             return {"purchases": []}
     except Exception as e:
-        print(f"Error getting purchases: {e}")
+        print(f"Error: {e}")
         return {"purchases": []}

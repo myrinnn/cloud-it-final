@@ -238,23 +238,17 @@ function searchPatterns() {
 //render pattern grid
 
 function renderPatterns(patterns, containerId) {
-    
     let container = document.getElementById(containerId);
     if (!container) return;
-
-    //no patterns yet text
 
     if (patterns.length === 0) {
         container.innerHTML = '<p>No patterns found</p>';
         return;
     }
 
-    //adds html 
-
     let html = '';
     patterns.forEach(p => {
-        let img = p.image_url;
-
+        let img = p.image_url || '/images/0.jpg';
         if (img && img.startsWith('/images/')) {
             img = 'https://pattern-service-6jrp.onrender.com' + img;
         }
@@ -279,60 +273,56 @@ function renderPatterns(patterns, containerId) {
 //pattern view popup
 
 async function viewPattern(id) {
-
-    //get pattern
-
-    let pattern = await Data.getPattern(id);
-    if (!pattern) return;
-
-    //get user
+    let pattern = allPatterns.find(p => p.id === id);
+    if (!pattern) {
+        alert('Pattern not found');
+        return;
+    }
 
     let user = await Data.getCurrentUser();
     let hasPurchased = false;
 
     if (user) {
-
         try {
             let result = await Data.getPurchases(user.id);
-            
             let purchases = result.purchases || [];
             hasPurchased = purchases.some(p => p.pattern_id === id);
-
-        } catch (e) {}
+        } catch (e) {
+            console.log('Error checking purchases:', e);
+        }
     }
 
-
     let isOwner = user && user.is_seller && pattern.seller_id === user.id;
-
-    //adds buttons
 
     let actionsHtml = '<div style="margin-top:15px;padding-top:15px;border-top:1px solid #eee;display:flex;flex-wrap:wrap;gap:10px;">';
     
     if (isOwner) {
-        actionsHtml += `
-        <button onclick="editPattern(${p.id})" class="btn-secondary">Edit</button>
-        <button onclick="deletePattern(${pattern.id})" style="background:#d32f2f;color:white;border:none;padding:8px 18px;border-radius:4px;cursor:pointer;">Delete Pattern</button>
-        `;
+        actionsHtml += `<button onclick="deletePattern(${pattern.id})" style="background:#d32f2f;color:white;border:none;padding:8px 18px;border-radius:4px;cursor:pointer;">Delete Pattern</button>`;
+        actionsHtml += `<button onclick="editPattern(${pattern.id})" style="background:#1976d2;color:white;border:none;padding:8px 18px;border-radius:4px;cursor:pointer;">Edit Pattern</button>`;
+        actionsHtml += `<button onclick="viewBuyers(${pattern.id})" style="background:#2e7d32;color:white;border:none;padding:8px 18px;border-radius:4px;cursor:pointer;">View Buyers</button>`;
     } else if (hasPurchased) {
         actionsHtml += `<button onclick="showDetails(${pattern.id})" style="background:#6b2d5c;color:white;border:none;padding:8px 18px;border-radius:4px;cursor:pointer;">View Full Pattern</button>`;
     } else if (pattern.price === 0) {
         actionsHtml += `<button onclick="getFreePattern(${pattern.id})" style="background:#1976d2;color:white;border:none;padding:8px 18px;border-radius:4px;cursor:pointer;">Get Pattern (Free)</button>`;
-    }  else {
+    } else {
         actionsHtml += `<button onclick="buyPattern(${pattern.id}, ${pattern.price})" style="background:#2e7d32;color:white;border:none;padding:8px 18px;border-radius:4px;cursor:pointer;">Buy €${pattern.price.toFixed(2)}</button>`;
     }
     
     actionsHtml += '</div>';
 
-    //adds popup text
-
     let walletInfo = '';
     if (user) {
-        walletInfo = `<p><strong>Your balance: </strong> €${(user.wallet || 0).toFixed(2)}</p>`;
+        walletInfo = `<p><strong>Your balance:</strong> €${(user.wallet || 0).toFixed(2)}</p>`;
+    }
+
+    let img = pattern.image_url || '/images/0.jpg';
+    if (img && img.startsWith('/images/')) {
+        img = 'https://pattern-service-6jrp.onrender.com' + img;
     }
 
     let html = `
         <div style="display:flex;flex-direction:column;gap:12px;">
-            <img src="${pattern.image_url || 'https://pattern-service-6jrp.onrender.com/images/0.jpg'}" 
+            <img src="${img}" 
                  alt="${pattern.title}" 
                  style="width:100%;max-height:250px;object-fit:cover;border-radius:4px;"
                  onerror="this.src='/images/0.jpg'">
@@ -436,6 +426,38 @@ async function getFreePattern(id) {
     }
 }
 
+//view buyers
+
+async function viewBuyers(patternId) {
+    let user = await Data.getCurrentUser();
+    if (!user) {
+        alert('Please login first');
+        return;
+    }
+    
+    try {
+        let response = await fetch(`https://pattern-service-6jrp.onrender.com/api/patterns/${patternId}/purchases`);
+        let result = await response.json();
+        let purchases = result.purchases || [];
+        
+        if (purchases.length === 0) {
+            alert('No one has purchased this pattern yet.');
+            return;
+        }
+        
+        let message = 'Buyers of this pattern:\n\n';
+        purchases.forEach((p, i) => {
+            let username = p.buyer_username || 'Unknown User';
+            let date = p.purchased_at ? new Date(p.purchased_at).toLocaleDateString() : 'Unknown date';
+            message += `${i + 1}. ${username} (Purchased: ${date})\n`;
+        });
+        
+        alert(message);
+    } catch (error) {
+        alert('Error loading buyers: ' + error.message);
+    }
+}
+
 //pattern details popup
 
 function showDetails(id) {
@@ -483,16 +505,12 @@ async function deletePattern(id) {
 //edit pattern
 
 async function editPattern(id) {
-
-    //get user
-
     let user = await Data.getCurrentUser();
     if (!user) {
         alert('Please login first');
+        showPage('login');
         return;
     }
-
-    //get pattern
     
     let pattern = allPatterns.find(p => p.id === id);
     if (!pattern) {
@@ -500,19 +518,23 @@ async function editPattern(id) {
         return;
     }
     
-    // get input
+    if (pattern.seller_id !== user.id) {
+        alert('You do not own this pattern');
+        return;
+    }
+    
+    // Fill the form
     document.getElementById('editId').value = pattern.id;
     document.getElementById('apTitle').value = pattern.title;
     document.getElementById('apDescription').value = pattern.description;
     document.getElementById('apPrice').value = pattern.price;
     document.getElementById('apImage').value = pattern.image_url || '';
     document.getElementById('apDetails').value = pattern.pattern_details || '';
+    document.getElementById('imagePreview').innerHTML = '';
+    document.getElementById('apImageFile').value = '';
     
-    document.getElementById('formTitle').textContent = 'Edit Pattern';
-    document.getElementById('patternForm').classList.remove('hidden');
-    
-    // edit popup
-    document.getElementById('patternForm').scrollIntoView({ behavior: 'smooth' });
+    // Show popup
+    document.getElementById('addPatternPopup').style.display = 'flex';
 }
 
 //add pattern btn
@@ -563,44 +585,45 @@ async function addPattern(event) {
         category: 'accessories'
     };
 
-
     let validation = Security.validatePattern(data);
     if (!validation.valid) {
         alert(Object.values(validation.errors).join('\n'));
         return;
     }
 
-if (editId) {
-    try {
-        
-        if (imageFile) {
-            let formData = new FormData();
-            formData.append('file', imageFile);
+    if (editId) {
+        try {
+            // Get existing pattern first
+            let existingPattern = allPatterns.find(p => p.id === parseInt(editId));
             
-            let response = await fetch(`https://pattern-service-6jrp.onrender.com/api/patterns/upload-image/${editId}`, {
-                method: 'POST',
-                body: formData
-            });
-            
-            let uploadResult = await response.json();
-            if (uploadResult.image_url) {
-                data.image_url = uploadResult.image_url;
+            if (imageFile) {
+                let formData = new FormData();
+                formData.append('file', imageFile);
+                
+                let response = await fetch(`https://pattern-service-6jrp.onrender.com/api/patterns/upload-image/${editId}`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                let uploadResult = await response.json();
+                if (uploadResult.image_url) {
+                    data.image_url = uploadResult.image_url;
+                }
+            } else {
+                data.image_url = existingPattern ? existingPattern.image_url : '';
             }
+            
+            let result = await Data.updatePattern(editId, data);
+            alert('Pattern updated!');
+            closePopup('addPatternPopup');
+            document.getElementById('addPatternForm').reset();
+            document.getElementById('editId').value = '';
+            document.getElementById('imagePreview').innerHTML = '';
+            loadMarketplace();
+        } catch (error) {
+            alert(error.message);
         }
-        
-        let result = await Data.updatePattern(editId, data);
-        
-        alert('Pattern updated!');
-        closePopup('addPatternPopup');
-        document.getElementById('addPatternForm').reset();
-        document.getElementById('editId').value = '';
-        document.getElementById('imagePreview').innerHTML = '';
-        loadMarketplace();
-    } catch (error) {
-        alert(error.message);
-    }
-} else {
-
+    } else {
         try {
             let result = await Data.createPattern(data);
             if (result) {
