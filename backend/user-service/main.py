@@ -68,12 +68,14 @@ load_users()
 if not users:
     users = [
         {"id": 1, "username": "Sarah", "password": "password", "wallet": 10.00, "is_seller": True},
-        {"id": 2, "username": "Fiona", "password": "password", "wallet": 10.00, "is_seller": False},
-        {"id": 3, "username": "Jane", "password": "password", "wallet": 10.00, "is_seller": False}
+        {"id": 2, "username": "Fiona", "password": "password", "wallet": 10.00, "is_seller": True},
+        {"id": 3, "username": "Jane", "password": "password", "wallet": 10.00, "is_seller": True},
+        {"id": 4, "username": "Mary", "password": "password", "wallet": 10.00, "is_seller": False},
+        {"id": 5, "username": "Bertha", "password": "password", "wallet": 10.00, "is_seller": False}
     ]
     id_counter = 4
     save_users()
-    print("✅ Default users saved to Azure")
+    print("default users saved to azure")
 
 
 class UserRegister(BaseModel):
