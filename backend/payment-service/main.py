@@ -137,14 +137,16 @@ async def purchase_pattern(purchase_data: PurchaseCreate):
         "purchase": new_purchase
     }
 
+@app.get("/api/payments/purchases/all")
+async def get_all_purchases():
+    return {"purchases": purchases}
+
 @app.get("/api/payments/purchases/{user_id}")
 async def get_purchases(user_id: int):
     user_purchases = [p for p in purchases if p["user_id"] == user_id]
     return {"purchases": user_purchases}
 
-@app.get("/api/payments/purchases/all")
-async def get_all_purchases():
-    return {"purchases": purchases}
+
 
 if __name__ == "__main__":
     import uvicorn
