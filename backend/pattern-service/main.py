@@ -223,16 +223,10 @@ async def get_pattern_purchases(pattern_id: int):
         
         if response.status_code == 200:
             data = response.json()
+            all_purchases = data.get("purchases", [])
             
-            if isinstance(data, list):
-                all_purchases = data
-            else:
-                all_purchases = data.get("purchases", [])
-            
-            # Filter for this pattern
             pattern_purchases = [p for p in all_purchases if p["pattern_id"] == pattern_id]
             
-            # Get buyer usernames
             for p in pattern_purchases:
                 try:
                     user_response = requests.get(
