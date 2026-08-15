@@ -53,7 +53,9 @@ async function updateUserDisplay() {
 
         //guest view
 
-        document.getElementById('userDisplay').textContent = 'Guest';
+
+        //only instance of jQuery, because on god even if you pointed a gun to my head and told me to do more i would only flop on the ground and cry
+        $('#userDisplay').text('Guest');
         document.getElementById('walletDisplay').style.display = 'none';
 
         document.getElementById('logoutBtn').style.display = 'none';
@@ -374,7 +376,7 @@ async function buyPattern(id, price) {
     try {
         let result = await Data.purchase(user.id, id, price);
         if (result.success) {
-            
+
             user.wallet = result.balance;
             Data.setUserId(user.id);
 
