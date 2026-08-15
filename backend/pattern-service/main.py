@@ -216,27 +216,23 @@ if __name__ == "__main__":
 async def get_pattern_purchases(pattern_id: int):
     import requests
     try:
-        # ✅ Get all purchases
         response = requests.get(
             "https://payment-service-0cbz.onrender.com/api/payments/purchases/all",
             timeout=5
         )
         
-        print(f"Payment service response status: {response.status_code}")
-        
         if response.status_code == 200:
             data = response.json()
-            print(f"Payment service response: {data}")
             
             if isinstance(data, list):
                 all_purchases = data
-            elif isinstance(data, dict) and "purchases" in data:
-                all_purchases = data["purchases"]
             else:
-                all_purchases = []
+                all_purchases = data.get("purchases", [])
             
-            pattern_purchases = [p for p in all_purchases if p.get("pattern_id") == pattern_id]
+            # Filter for this pattern
+            pattern_purchases = [p for p in all_purchases if p["pattern_id"] == pattern_id]
             
+            # Get buyer usernames
             for p in pattern_purchases:
                 try:
                     user_response = requests.get(
